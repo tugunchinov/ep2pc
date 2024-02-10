@@ -15,3 +15,6 @@ members = [
 path = "settings"
 
 [dependencies]
+
+[dev-dependencies]
+cargo-husky = "1"
