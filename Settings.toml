@@ -1,0 +1,3 @@
+send_period = 3
+port = 8080
+connect_to = "127.0.0.1:8081"

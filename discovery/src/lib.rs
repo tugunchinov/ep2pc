@@ -1,8 +1,8 @@
 use std::collections::HashSet;
-use std::net::Ipv4Addr;
+use std::net::SocketAddrV4;
 
 struct DiscoveryService {
-    peers: HashSet<Ipv4Addr>,
+    peers: HashSet<SocketAddrV4>,
 }
 
 impl DiscoveryService {
@@ -12,11 +12,11 @@ impl DiscoveryService {
         }
     }
 
-    pub fn add_peer(&mut self, peer: &Ipv4Addr) {
+    pub fn add_peer(&mut self, peer: &SocketAddrV4) {
         self.peers.insert(*peer);
     }
 
-    pub fn get_known_peers(&self) -> &HashSet<Ipv4Addr> {
+    pub fn get_known_peers(&self) -> &HashSet<SocketAddrV4> {
         &self.peers
     }
 

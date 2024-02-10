@@ -1,9 +1,17 @@
-workspace = { members = ["discovery", "peer", "repo"] }
 [package]
-name = "peer-communication"
+name = "ep2pc"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = [
+    "discovery",
+    "peer",
+    "repo",
+    "settings"
+]
+
+[dependencies.settings]
+path = "settings"
 
 [dependencies]
