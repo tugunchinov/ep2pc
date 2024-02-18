@@ -3,6 +3,7 @@ use std::net::SocketAddrV4;
 use std::str::FromStr;
 use std::sync::Mutex;
 
+// for env variables
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
 #[test]

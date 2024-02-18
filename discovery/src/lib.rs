@@ -4,7 +4,8 @@ mod tests;
 use std::collections::HashSet;
 use std::net::SocketAddrV4;
 
-struct DiscoveryService {
+// TODO: add persistent storage for peers
+pub struct DiscoveryService {
     peers: HashSet<SocketAddrV4>,
 }
 
@@ -19,11 +20,21 @@ impl DiscoveryService {
         self.peers.insert(*peer);
     }
 
-    pub fn get_known_peers(&self) -> &HashSet<SocketAddrV4> {
+    fn get_known_peers(&self, _limit: Option<u64>) -> &HashSet<SocketAddrV4> {
         &self.peers
+    }
+
+    pub fn get_random_peers(&self, cnt: u64) -> &HashSet<SocketAddrV4> {
+        self.get_known_peers(Some(cnt))
     }
 
     pub fn discover_new_peers(&mut self) {
         unimplemented!()
+    }
+}
+
+impl Default for DiscoveryService {
+    fn default() -> Self {
+        Self::new()
     }
 }

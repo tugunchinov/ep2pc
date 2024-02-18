@@ -8,7 +8,7 @@ use std::net::SocketAddrV4;
 struct CmdParams {
     #[argh(option, short = 's')]
     /// messages sending period
-    send_period: Option<u32>,
+    send_period: Option<u64>,
     #[argh(option, short = 'p')]
     /// port to listen to
     port: Option<u16>,
@@ -19,7 +19,7 @@ struct CmdParams {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Config {
-    pub send_period: u32,
+    pub send_period: u64,
     pub port: u16,
     pub connect_to: Option<SocketAddrV4>,
 }
