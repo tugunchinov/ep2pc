@@ -5,16 +5,23 @@ edition = "2021"
 
 [workspace]
 members = [
+    "compiler",
+    "crypto",
     "discovery",
     "peer",
     "repo",
-    "settings"
-]
+    "runtime",
+    "settings",
+    "vm"]
+
+[dependencies.peer]
+path = "peer"
 
 [dependencies.settings]
 path = "settings"
 
 [dependencies]
+env_logger = "0.11.2"
 
 [dev-dependencies]
 cargo-husky = "1"

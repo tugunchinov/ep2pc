@@ -2,16 +2,17 @@ use discovery::DiscoveryService;
 use settings::Config;
 use std::collections::HashSet;
 use std::net::{SocketAddrV4, UdpSocket};
+use std::sync::Arc;
 use std::thread;
 
 #[cfg(test)]
 mod tests;
 
 // TODO: better
-const MSG_MAX_SIZE: usize = 1024;
+const MESSAGE_SIZE: usize = 1024;
 
 // TODO: move to separate file
-struct Peer {
+pub struct Peer {
     listening_socket: UdpSocket,
     send_period: u64,
     discovery: DiscoveryService,
@@ -19,7 +20,7 @@ struct Peer {
 
 // TODO: anyhow + error handler?
 impl Peer {
-    fn new(cfg: Config) -> Self {
+    pub fn new(cfg: Config) -> Self {
         // TODO: run discover service
         // TODO: better
         let listening_socket = UdpSocket::bind(format!("0.0.0.0:{}", cfg.port))
@@ -38,21 +39,45 @@ impl Peer {
         }
     }
 
+    // blocking
+    pub fn run(self) {
+        log::info!("The peer is starting...");
+
+        let arc_self = Arc::new(self);
+
+        let listen_handle = {
+            let self_cloned = arc_self.clone();
+
+            thread::spawn(move || self_cloned.listen())
+        };
+
+        arc_self.speak();
+
+        listen_handle.join().expect("failed");
+    }
+
     fn listen(&self) {
-        let mut buf = vec![0; MSG_MAX_SIZE];
+        log::info!(
+            "Listening on {}",
+            self.listening_socket
+                .local_addr()
+                .expect("failed getting local address")
+        );
+
+        let mut buf = vec![0; MESSAGE_SIZE];
 
         loop {
             // TODO: better (check if one message is split)
             // TODO: check whether it is a message or an attempt to join the network / sync peers in discovery
-            self.listening_socket
+            let (_, peer) = self
+                .listening_socket
                 .recv_from(&mut buf)
                 .expect("failed reading message");
 
             let received_message =
                 std::str::from_utf8(&buf).expect("failed parsing incoming message");
 
-            // TODO: env_logger
-            println!("received a message: {received_message}");
+            log::info!("Message from {peer}: {received_message}",);
 
             let peers = self.discovery.get_random_peers(10);
             self.broadcast_message(received_message.as_bytes(), peers);
@@ -61,6 +86,7 @@ impl Peer {
 
     fn speak(&self) {
         // TODO: run discovery service
+        log::info!("Broadcasting messages...");
 
         loop {
             let peers = self.discovery.get_random_peers(10);
