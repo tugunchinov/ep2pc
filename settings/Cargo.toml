@@ -2,10 +2,11 @@
 name = "settings"
 version = "0.1.0"
 edition = "2021"
+authors = ["Maxim Tugunchinov <tugunchinov.maxim@gmail.com>"]
+description = "TODO"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-argh = "0.1.12"
 config = "0.14.0"
 serde = { version = "1.0.196", features = ["derive"] }

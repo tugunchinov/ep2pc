@@ -1,5 +1,6 @@
 // TODO: result
 
+use discovery::DiscoveryService;
 use peer::Peer;
 
 #[cfg(test)]
@@ -10,7 +11,9 @@ pub fn run() {
 
     let config = settings::Config::new();
 
-    let peer = Peer::new(config);
+    let discovery = DiscoveryService::new(&config.discovery);
+
+    let peer = Peer::new(&config.peer, discovery);
 
     peer.run();
 }

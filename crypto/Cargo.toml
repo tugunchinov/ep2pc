@@ -2,6 +2,8 @@
 name = "crypto"
 version = "0.1.0"
 edition = "2021"
+authors = ["Maxim Tugunchinov <tugunchinov.maxim@gmail.com>"]
+description = "TODO"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

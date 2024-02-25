@@ -1,5 +1,4 @@
 use discovery::DiscoveryService;
-use settings::Config;
 use std::collections::HashSet;
 use std::net::{SocketAddrV4, UdpSocket};
 use std::sync::Arc;
@@ -8,34 +7,24 @@ use std::thread;
 #[cfg(test)]
 mod tests;
 
-// TODO: better
-const MESSAGE_SIZE: usize = 1024;
-
 // TODO: move to separate file
 pub struct Peer {
+    discovery: DiscoveryService,
     listening_socket: UdpSocket,
     send_period: u64,
-    discovery: DiscoveryService,
 }
 
-// TODO: anyhow + error handler?
+// TODO: better error handling
 impl Peer {
-    pub fn new(cfg: Config) -> Self {
-        // TODO: run discover service
+    pub fn new(cfg: &settings::peer::Config, discovery: DiscoveryService) -> Self {
         // TODO: better
         let listening_socket = UdpSocket::bind(format!("0.0.0.0:{}", cfg.port))
             .unwrap_or_else(|_| panic!("failed binding to port {}", cfg.port));
 
-        let mut discovery = DiscoveryService::new();
-
-        if let Some(connect_to) = cfg.connect_to {
-            discovery.add_peer(&connect_to);
-        }
-
         Self {
+            discovery,
             listening_socket,
             send_period: cfg.send_period,
-            discovery,
         }
     }
 
@@ -64,23 +53,43 @@ impl Peer {
                 .expect("failed getting local address")
         );
 
-        let mut buf = vec![0; MESSAGE_SIZE];
+        let mut len_buf = [0u8; 8];
+        let mut msg_type_buf = [0u8; 2];
 
         loop {
             // TODO: better (check if one message is split)
             // TODO: check whether it is a message or an attempt to join the network / sync peers in discovery
             let (_, peer) = self
                 .listening_socket
-                .recv_from(&mut buf)
+                .recv_from(&mut len_buf)
+                .expect("failed reading message length");
+
+            let len = u64::from_le_bytes(len_buf);
+
+            log::info!("received message from peer {peer} with length {len}");
+
+            let (_, peer) = self
+                .listening_socket
+                .recv_from(&mut msg_type_buf)
+                .expect("failed reading message length");
+
+            let msg_type = messages::MessageType::from(u16::from_le_bytes(msg_type_buf));
+
+            let mut message_buf = vec![0u8; len as usize];
+
+            let (bytes_received, peer) = self
+                .listening_socket
+                .recv_from(&mut message_buf)
                 .expect("failed reading message");
 
-            let received_message =
-                std::str::from_utf8(&buf).expect("failed parsing incoming message");
+            assert_eq!(bytes_received, len as usize);
 
-            log::info!("Message from {peer}: {received_message}",);
+            log::info!(
+                "received message from peer {peer} with length {len}. Message type: {msg_type:#?}"
+            );
 
-            let peers = self.discovery.get_random_peers(10);
-            self.broadcast_message(received_message.as_bytes(), peers);
+            // let peers = self.discovery.get_random_peers(10);
+            // self.broadcast_message(received_message.as_bytes(), peers);
         }
     }
 
@@ -89,7 +98,7 @@ impl Peer {
         log::info!("Broadcasting messages...");
 
         loop {
-            let peers = self.discovery.get_random_peers(10);
+            // let peers = self.discovery.get_random_peers(10);
 
             let now = std::time::SystemTime::now();
             let me = self
@@ -98,7 +107,7 @@ impl Peer {
                 .expect("failed getting local address");
             let message = format!("Peer {me}. Time: {now:#?}");
 
-            self.broadcast_message(message.as_bytes(), peers);
+            //self.broadcast_message(message.as_bytes(), peers);
 
             thread::sleep(std::time::Duration::from_secs(self.send_period));
         }

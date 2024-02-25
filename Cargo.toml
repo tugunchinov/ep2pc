@@ -2,17 +2,24 @@
 name = "ep2pc"
 version = "0.1.0"
 edition = "2021"
+authors = ["Maxim Tugunchinov <tugunchinov.maxim@gmail.com>"]
+description = "TODO"
 
 [workspace]
 members = [
     "compiler",
     "crypto",
-    "discovery",
+    "discovery", "messages",
     "peer",
     "repo",
+    "result",
     "runtime",
     "settings",
-    "vm"]
+    "vm"
+]
+
+[dependencies.discovery]
+path = "discovery"
 
 [dependencies.peer]
 path = "peer"

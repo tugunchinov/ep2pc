@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package models.discovery.requests;
+
+message SyncPeersRequest {
+  int32 garbage = 1;
+}
