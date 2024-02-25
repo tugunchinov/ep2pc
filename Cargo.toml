@@ -30,5 +30,6 @@ path = "settings"
 [dependencies]
 env_logger = "0.11.2"
 
-[dev-dependencies]
-cargo-husky = "1"
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+features = ["run-cargo-fmt", "run-cargo-clippy"]
