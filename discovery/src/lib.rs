@@ -3,7 +3,7 @@ mod tests;
 
 use std::collections::HashSet;
 use std::io::Write;
-use std::net::{SocketAddrV4, TcpStream, UdpSocket};
+use std::net::{SocketAddrV4, TcpStream};
 
 // TODO: add persistent storage for peers
 pub struct DiscoveryService {
