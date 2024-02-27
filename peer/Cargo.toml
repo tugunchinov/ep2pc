@@ -10,8 +10,8 @@ description = "TODO"
 [dependencies.discovery]
 path = "../discovery"
 
-[dependencies.messages]
-path = "../messages"
+[dependencies.network]
+path = "../network"
 
 [dependencies.settings]
 path = "../settings"

@@ -10,7 +10,6 @@ members = [
     "compiler",
     "crypto",
     "discovery",
-    "messages",
     "network",
     "peer",
     "repo",

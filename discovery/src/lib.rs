@@ -2,8 +2,7 @@
 mod tests;
 
 use std::collections::HashSet;
-use std::io::Write;
-use std::net::{SocketAddrV4, TcpStream};
+use std::net::SocketAddrV4;
 
 // TODO: add persistent storage for peers
 pub struct DiscoveryService {
@@ -22,35 +21,15 @@ impl DiscoveryService {
     }
 
     fn sync_peers(sync_with: &[SocketAddrV4]) -> HashSet<SocketAddrV4> {
-        use messages::Message;
-
         // TODO: better
 
         let sync_result = HashSet::new();
 
         for peer in sync_with {
-            let mut socket =
-                TcpStream::connect(peer).unwrap_or_else(|_| panic!("failed connecting to {peer}"));
+            let request = network::messages::discovery::requests::SyncPeersRequest { garbage: 42 };
+            let msg_type = network::messages::discovery::requests::RequestType::SyncPeers;
 
-            let request = messages::discovery::requests::SyncPeersRequest { garbage: 42 };
-
-            // TODO: better (one allocation)
-            let serialized_message = request.encode_to_vec();
-            let mut buf = (request.encoded_len() as u64).to_le_bytes().to_vec();
-            buf.extend(
-                (messages::discovery::requests::RequestType::SyncPeers as u16)
-                    .to_le_bytes()
-                    .to_vec(),
-            );
-            buf.extend(serialized_message);
-
-            log::info!("Sending sync request");
-
-            socket
-                .write_all(&buf)
-                .expect("failed sending message to {peer}");
-
-            //let (addr, peer) = socket.recv_from().expect("failed receiving 8");
+            network::send_message(*peer, msg_type.into(), request);
         }
 
         sync_result
@@ -58,21 +37,22 @@ impl DiscoveryService {
 
     pub fn dispatch_message(
         &self,
-        msg_type: messages::discovery::DiscoveryMessageType,
+        msg_type: network::messages::discovery::DiscoveryMessageType,
         msg_buf: &[u8],
     ) {
-        use messages::Message;
+        use network::messages::ProtoMessage;
 
         match msg_type {
-            messages::discovery::DiscoveryMessageType::RequestType(r) => match r {
-                messages::discovery::requests::RequestType::SyncPeers => {
-                    let request = messages::discovery::requests::SyncPeersRequest::decode(msg_buf)
-                        .expect("failed decoding request");
+            network::messages::discovery::DiscoveryMessageType::RequestType(r) => match r {
+                network::messages::discovery::requests::RequestType::SyncPeers => {
+                    let request =
+                        network::messages::discovery::requests::SyncPeersRequest::decode(msg_buf)
+                            .expect("failed decoding request");
 
                     log::info!("Received SyncPeers request: {request:#?}");
                 }
             },
-            messages::discovery::DiscoveryMessageType::ResponseType(_) => todo!(),
+            network::messages::discovery::DiscoveryMessageType::ResponseType(_) => todo!(),
         }
     }
 

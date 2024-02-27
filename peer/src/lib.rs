@@ -1,5 +1,4 @@
 use discovery::DiscoveryService;
-use messages::MessageType;
 use std::collections::HashSet;
 use std::io::Read;
 use std::net::{SocketAddrV4, TcpListener};
@@ -32,7 +31,7 @@ impl Peer {
 
     // blocking
     pub fn run(self) {
-        log::info!("The peer is starting...");
+        log::info!("Starting peer...");
 
         let arc_self = Arc::new(self);
 
@@ -69,8 +68,13 @@ impl Peer {
             let (msg_len_buf, msg_type_buf) = meta_info_buf.split_at(8);
 
             let msg_len = u64::from_le_bytes(msg_len_buf.try_into().unwrap());
-            let msg_type =
-                messages::MessageType::from(u16::from_le_bytes(msg_type_buf.try_into().unwrap()));
+
+            let msg_type = network::messages::MessageType::try_from(u16::from_le_bytes(
+                msg_type_buf
+                    .try_into()
+                    .expect("failed build u16 from bytes"),
+            ))
+                .expect("failed converting u16 to message type");
 
             log::info!("received message from peer {peer}, type: {msg_type:#?}, length: {msg_len}");
 
@@ -81,7 +85,7 @@ impl Peer {
                 .expect("failed reading message body");
 
             match msg_type {
-                MessageType::DiscoveryMessageType(t) => {
+                network::messages::MessageType::DiscoveryMessageType(t) => {
                     self.discovery.dispatch_message(t, msg_buf.as_slice());
                 }
             }
