@@ -42,9 +42,9 @@ fn test_config_env() {
         SocketAddrV4::from_str("1.1.1.1:42").expect("failed creating socket address");
     assert_eq!(config.discovery.sync_with, Some(expected_address));
 
-    std::env::remove_var("SEND_PERIOD");
-    std::env::remove_var("PORT");
-    std::env::remove_var("CONNECT_TO");
+    std::env::remove_var("PEER__SEND_PERIOD");
+    std::env::remove_var("PEER__PORT");
+    std::env::remove_var("DISCOVERY__SYNC_WITH");
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn test_overwrite() {
 
     std::fs::remove_file("Settings.toml").expect("failed removing Settings.toml");
 
-    std::env::remove_var("SEND_PERIOD");
-    std::env::remove_var("PORT");
-    std::env::remove_var("CONNECT_TO");
+    std::env::remove_var("PEER__SEND_PERIOD");
+    std::env::remove_var("PEER__PORT");
+    std::env::remove_var("DISCOVERY__SYNC_WITH");
 }
