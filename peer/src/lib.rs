@@ -103,7 +103,7 @@ impl Peer {
                 .listener
                 .local_addr()
                 .expect("failed getting local address");
-            let message = format!("Peer {me}. Time: {now:#?}");
+            let _message = format!("Peer {me}. Time: {now:#?}");
 
             //self.broadcast_message(message.as_bytes(), peers);
 
@@ -111,7 +111,7 @@ impl Peer {
         }
     }
 
-    fn broadcast_message(&self, message: &[u8], peers: &HashSet<SocketAddrV4>) {
+    fn _broadcast_message(&self, _message: &[u8], _peers: &HashSet<SocketAddrV4>) {
         todo!()
         // let mut handles = Vec::with_capacity(peers.len());
         //
