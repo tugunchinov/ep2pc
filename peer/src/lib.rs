@@ -1,6 +1,8 @@
 use discovery::DiscoveryService;
+use messages::MessageType;
 use std::collections::HashSet;
-use std::net::{SocketAddrV4, UdpSocket};
+use std::io::Read;
+use std::net::{SocketAddrV4, TcpListener};
 use std::sync::Arc;
 use std::thread;
 
@@ -10,7 +12,7 @@ mod tests;
 // TODO: move to separate file
 pub struct Peer {
     discovery: DiscoveryService,
-    listening_socket: UdpSocket,
+    listener: TcpListener,
     send_period: u64,
 }
 
@@ -18,12 +20,12 @@ pub struct Peer {
 impl Peer {
     pub fn new(cfg: &settings::peer::Config, discovery: DiscoveryService) -> Self {
         // TODO: better
-        let listening_socket = UdpSocket::bind(format!("0.0.0.0:{}", cfg.port))
+        let listening_socket = TcpListener::bind(format!("0.0.0.0:{}", cfg.port))
             .unwrap_or_else(|_| panic!("failed binding to port {}", cfg.port));
 
         Self {
             discovery,
-            listening_socket,
+            listener: listening_socket,
             send_period: cfg.send_period,
         }
     }
@@ -48,45 +50,41 @@ impl Peer {
     fn listen(&self) {
         log::info!(
             "Listening on {}",
-            self.listening_socket
+            self.listener
                 .local_addr()
                 .expect("failed getting local address")
         );
 
-        let mut len_buf = [0u8; 8];
-        let mut msg_type_buf = [0u8; 2];
+        let mut meta_info_buf = [0u8; 10];
 
         loop {
             // TODO: better (check if one message is split)
             // TODO: check whether it is a message or an attempt to join the network / sync peers in discovery
-            let (_, peer) = self
-                .listening_socket
-                .recv_from(&mut len_buf)
-                .expect("failed reading message length");
+            let (mut incoming, peer) = self.listener.accept().expect("failed accepting connection");
 
-            let len = u64::from_le_bytes(len_buf);
+            incoming
+                .read_exact(&mut meta_info_buf)
+                .expect("failed reading message meta");
 
-            log::info!("received message from peer {peer} with length {len}");
+            let (msg_len_buf, msg_type_buf) = meta_info_buf.split_at(8);
 
-            let (_, peer) = self
-                .listening_socket
-                .recv_from(&mut msg_type_buf)
-                .expect("failed reading message length");
+            let msg_len = u64::from_le_bytes(msg_len_buf.try_into().unwrap());
+            let msg_type =
+                messages::MessageType::from(u16::from_le_bytes(msg_type_buf.try_into().unwrap()));
 
-            let msg_type = messages::MessageType::from(u16::from_le_bytes(msg_type_buf));
+            log::info!("received message from peer {peer}, type: {msg_type:#?}, length: {msg_len}");
 
-            let mut message_buf = vec![0u8; len as usize];
+            let mut msg_buf = vec![0u8; msg_len as usize];
 
-            let (bytes_received, peer) = self
-                .listening_socket
-                .recv_from(&mut message_buf)
-                .expect("failed reading message");
+            incoming
+                .read_exact(&mut msg_buf)
+                .expect("failed reading message body");
 
-            assert_eq!(bytes_received, len as usize);
-
-            log::info!(
-                "received message from peer {peer} with length {len}. Message type: {msg_type:#?}"
-            );
+            match msg_type {
+                MessageType::DiscoveryMessageType(t) => {
+                    self.discovery.dispatch_message(t, msg_buf.as_slice());
+                }
+            }
 
             // let peers = self.discovery.get_random_peers(10);
             // self.broadcast_message(received_message.as_bytes(), peers);
@@ -102,7 +100,7 @@ impl Peer {
 
             let now = std::time::SystemTime::now();
             let me = self
-                .listening_socket
+                .listener
                 .local_addr()
                 .expect("failed getting local address");
             let message = format!("Peer {me}. Time: {now:#?}");
@@ -114,34 +112,35 @@ impl Peer {
     }
 
     fn broadcast_message(&self, message: &[u8], peers: &HashSet<SocketAddrV4>) {
-        let mut handles = Vec::with_capacity(peers.len());
-
-        // TODO: reliable broadcast
-        for peer in peers {
-            // TODO: green threads
-            {
-                // satisfying borrow checker
-                let peer = *peer;
-                let message = message.to_vec();
-
-                handles.push(thread::spawn(move || {
-                    let speaking_socket = UdpSocket::bind("0.0.0.0:0")
-                        .unwrap_or_else(|_| panic!("failed creating socket"));
-
-                    speaking_socket
-                        .connect(peer)
-                        .expect("failed connecting to peer {peer}");
-
-                    speaking_socket
-                        .send(&message)
-                        .expect("failed sending message to {peer}");
-                }));
-            }
-        }
-
-        // TODO: futures::join
-        for handle in handles {
-            handle.join().expect("failed joining handle");
-        }
+        todo!()
+        // let mut handles = Vec::with_capacity(peers.len());
+        //
+        // // TODO: reliable broadcast
+        // for peer in peers {
+        //     // TODO: green threads
+        //     {
+        //         // satisfying borrow checker
+        //         let peer = *peer;
+        //         let message = message.to_vec();
+        //
+        //         handles.push(thread::spawn(move || {
+        //             let speaking_socket = UdpSocket::bind("0.0.0.0:0")
+        //                 .unwrap_or_else(|_| panic!("failed creating socket"));
+        //
+        //             speaking_socket
+        //                 .connect(peer)
+        //                 .expect("failed connecting to peer {peer}");
+        //
+        //             speaking_socket
+        //                 .send(&message)
+        //                 .expect("failed sending message to {peer}");
+        //         }));
+        //     }
+        // }
+        //
+        // // TODO: futures::join
+        // for handle in handles {
+        //     handle.join().expect("failed joining handle");
+        // }
     }
 }

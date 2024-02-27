@@ -10,3 +10,5 @@ path = "../messages"
 
 [dependencies.settings]
 path = "../settings"
+[dependencies]
+log = "0.4.20"

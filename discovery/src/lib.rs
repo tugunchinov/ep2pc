@@ -2,7 +2,8 @@
 mod tests;
 
 use std::collections::HashSet;
-use std::net::{SocketAddrV4, UdpSocket};
+use std::io::Write;
+use std::net::{SocketAddrV4, TcpStream, UdpSocket};
 
 // TODO: add persistent storage for peers
 pub struct DiscoveryService {
@@ -28,12 +29,8 @@ impl DiscoveryService {
         let sync_result = HashSet::new();
 
         for peer in sync_with {
-            let socket =
-                UdpSocket::bind("0.0.0.0:0").unwrap_or_else(|_| panic!("failed creating socket"));
-
-            socket
-                .connect(peer)
-                .expect("failed connecting to peer {peer}");
+            let mut socket =
+                TcpStream::connect(peer).unwrap_or_else(|_| panic!("failed connecting to {peer}"));
 
             let request = messages::discovery::requests::SyncPeersRequest { garbage: 42 };
 
@@ -41,18 +38,42 @@ impl DiscoveryService {
             let serialized_message = request.encode_to_vec();
             let mut buf = (request.encoded_len() as u64).to_le_bytes().to_vec();
             buf.extend(
-                (messages::discovery::requests::Request::SyncPeers as u16)
+                (messages::discovery::requests::RequestType::SyncPeers as u16)
                     .to_le_bytes()
                     .to_vec(),
             );
             buf.extend(serialized_message);
 
-            socket.send(&buf).expect("failed sending message to {peer}");
+            log::info!("Sending sync request");
+
+            socket
+                .write_all(&buf)
+                .expect("failed sending message to {peer}");
 
             //let (addr, peer) = socket.recv_from().expect("failed receiving 8");
         }
 
         sync_result
+    }
+
+    pub fn dispatch_message(
+        &self,
+        msg_type: messages::discovery::DiscoveryMessageType,
+        msg_buf: &[u8],
+    ) {
+        use messages::Message;
+
+        match msg_type {
+            messages::discovery::DiscoveryMessageType::RequestType(r) => match r {
+                messages::discovery::requests::RequestType::SyncPeers => {
+                    let request = messages::discovery::requests::SyncPeersRequest::decode(msg_buf)
+                        .expect("failed decoding request");
+
+                    log::info!("Received SyncPeers request: {request:#?}");
+                }
+            },
+            messages::discovery::DiscoveryMessageType::ResponseType(_) => todo!(),
+        }
     }
 
     pub fn add_peer(&mut self, peer: &SocketAddrV4) {

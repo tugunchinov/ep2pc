@@ -8,5 +8,5 @@ fn main() {
         ],
         &["src/"],
     )
-        .expect("failed building protos");
+    .expect("failed building protos");
 }

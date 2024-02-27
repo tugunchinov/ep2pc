@@ -1,12 +1,12 @@
 #[derive(Debug)]
-pub enum Discovery {
-    Request(requests::Request),
-    Response(responses::Response),
+pub enum DiscoveryMessageType {
+    RequestType(requests::RequestType),
+    ResponseType(responses::ResponseType),
 }
 
 pub mod requests {
     #[derive(Debug)]
-    pub enum Request {
+    pub enum RequestType {
         SyncPeers = 0,
     }
 
@@ -15,7 +15,7 @@ pub mod requests {
 
 pub mod responses {
     #[derive(Debug)]
-    pub enum Response {
+    pub enum ResponseType {
         SyncPeers = 100,
     }
 

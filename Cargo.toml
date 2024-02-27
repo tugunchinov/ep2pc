@@ -9,7 +9,9 @@ description = "TODO"
 members = [
     "compiler",
     "crypto",
-    "discovery", "messages",
+    "discovery",
+    "messages",
+    "network",
     "peer",
     "repo",
     "result",

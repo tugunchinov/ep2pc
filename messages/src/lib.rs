@@ -5,20 +5,20 @@ pub use prost::Message;
 
 #[derive(Debug)]
 pub enum MessageType {
-    Discovery(discovery::Discovery),
+    DiscoveryMessageType(discovery::DiscoveryMessageType),
 }
 
 // TODO: TryFrom
 impl From<u16> for MessageType {
     fn from(value: u16) -> Self {
         match value {
-            0..=999 => MessageType::Discovery(match value {
-                0..=99 => discovery::Discovery::Request(match value {
-                    0 => discovery::requests::Request::SyncPeers,
+            0..=999 => MessageType::DiscoveryMessageType(match value {
+                0..=99 => discovery::DiscoveryMessageType::RequestType(match value {
+                    0 => discovery::requests::RequestType::SyncPeers,
                     _ => panic!("unknown discovery request type"),
                 }),
-                100..=199 => discovery::Discovery::Response(match value {
-                    100 => discovery::responses::Response::SyncPeers,
+                100..=199 => discovery::DiscoveryMessageType::ResponseType(match value {
+                    100 => discovery::responses::ResponseType::SyncPeers,
                     _ => panic!("unknown discovery response type"),
                 }),
                 _ => panic!("unknown discovery message type"),
