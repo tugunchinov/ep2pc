@@ -74,7 +74,7 @@ impl Peer {
                     .try_into()
                     .expect("failed build u16 from bytes"),
             ))
-                .expect("failed converting u16 to message type");
+            .expect("failed converting u16 to message type");
 
             log::info!("received message from peer {peer}, type: {msg_type:#?}, length: {msg_len}");
 
