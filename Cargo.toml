@@ -7,14 +7,11 @@ description = "TODO"
 
 [workspace]
 members = [
-    "compiler",
-    "crypto",
     "discovery",
     "network",
     "peer",
     "repo",
     "result",
-    "runtime",
     "settings",
     "vm"
 ]
